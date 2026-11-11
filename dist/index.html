@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="theme-color" content="#060b13"><meta name="description" content="驾驶探索者飞船，在太阳系穿行，探索并拆解奥德赛空间站。">
+  <title>ASTRA · 星海远征</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 3 37 34H3Z' fill='%239ae9ee'/%3E%3Cpath d='m20 16 7 13H13Z' fill='%23060b13'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css"><link rel="stylesheet" href="./experience.css">
+</head>
+<body>
+  <div id="viewport" aria-label="可交互的三维宇宙场景"></div>
+  <div class="vignette"></div><div class="filmgrain"></div>
+  <div id="loading"><div class="loading-mark">A</div><div class="loading-title">ASTRA</div><p id="load-text">正在连接深空信标…</p><div class="loading-line"><i></i></div></div>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="返回空间站"><svg viewBox="0 0 40 40"><path d="M20 5 36 34H4L20 5Z"/><path d="m20 17 7 13H13l7-13Z"/><path d="M2 23h36"/></svg><span>ASTRA<small>深空探索计划</small></span></a>
+    <nav class="mode-nav" aria-label="场景模式"><button class="active" data-mode="station"><span class="nav-dot"></span>空间站</button><button data-mode="solar">太阳系</button><button data-mode="flight">自由飞行</button><button data-experience="interior">舱内漫游</button><button data-experience="archive">行星档案</button></nav>
+    <div class="header-actions"><span class="live"><i></i> 系统在线</span><button id="sound" class="icon-button" title="开启环境音" aria-label="开启环境音" data-icon="volume-off"></button><button id="fullscreen" class="icon-button" title="全屏" aria-label="全屏" data-icon="expand"></button><button id="help" class="icon-button" title="操作指南" aria-label="操作指南" data-icon="help"></button></div>
+  </header>
+  <main class="hud">
+    <section class="intro"><div class="eyebrow"><span></span> BEYOND THE KNOWN</div><h1>星海，无垠<span>。</span></h1><p>从这里，驶向人类想象的边界。</p><div class="location"><span class="bracket">[</span><i></i><span id="location-name">地球轨道 · 奥德赛空间站</span><span class="bracket">]</span></div></section>
+    <aside class="mission"><div class="section-label"><span>EXPLORATION / 当前区域</span><span class="tiny-orbit"></span></div><h2 id="mission-title">欢迎来到奥德赛</h2><p id="mission-description">一座漂浮于群星之间的城市。<br>拖动画面，发现它的每一面。</p><div class="mission-stats"><div><strong id="stat-main">08</strong><span id="stat-label">独立功能模块</span></div><div><strong id="progress">0<span>/8</span></strong><span>行星探索记录</span></div></div><button id="launch" class="primary-button"><span data-icon="rocket"></span><span>启航 · 自由探索</span><span class="button-arrow">↗</span></button><button id="scan" class="secondary-button hidden"><span data-icon="scan"></span>扫描当前星体 <kbd>E</kbd></button><div class="mission-footer"><i></i><span id="mission-status">探索者号已就绪</span><span class="signal">▂▄▆</span></div></aside>
+    <aside class="station-panel" id="station-panel"><div class="section-label"><span>STATION CONTROL</span><span class="online-dot"></span></div><div class="station-name">ODYSSEY <span>01</span></div><p class="station-subtitle">奥德赛 · 轨道枢纽</p><div class="divider"></div><div class="control-row"><span>结构视图</span><button id="explode" class="switch" role="switch" aria-checked="false" aria-label="拆解空间站"><span></span></button></div><div class="explode-label"><span id="structure-state">整体组装</span><span id="structure-percent">0%</span></div><input id="explode-range" type="range" min="0" max="100" value="0" aria-label="空间站拆解程度"><div class="module-header"><span>功能模块</span><span>选择查看 ↙</span></div><div id="module-list"></div><button id="reset-camera" class="text-button"><span data-icon="reset"></span>重置观察视角</button></aside>
+    <div id="target-marker" class="target-marker"><span class="marker-dot"></span><div class="marker-line"></div><div><small>人类的下一座地平线</small><strong id="target-title">奥德赛空间站</strong></div></div>
+    <div id="reticle" class="reticle hidden"><i></i><i></i><span></span><i></i><i></i></div>
+    <div id="telemetry" class="telemetry hidden"><div class="speed-number"><span id="speed">0</span><small>KM/S</small></div><div class="speed-track"><i id="speed-bar"></i></div><p id="flight-status">巡航待命</p><span>EXPLORER / 探索者号</span></div>
+    <div class="view-hint" id="view-hint"><span data-icon="mouse"></span><span>拖动旋转</span><b>·</b><span>滚轮缩放</span><b>·</b><span>点击模块查看</span></div>
+    <div class="scene-caption"><span class="cross">+</span><div><span id="sector">SOL SYSTEM</span><small id="sector-sub">地球近地轨道 / SECTOR 03</small></div></div>
+  </main>
+  <footer class="destination-dock"><div class="dock-title"><span data-icon="orbit"></span><div>星际导航<small>SOLAR SYSTEM</small></div></div><div id="destinations" aria-label="跃迁目的地"></div><div class="dock-end"><span class="online-dot"></span><span>跃迁引擎<small>READY</small></span></div></footer>
+  <div class="bottom-note"><span>ARTISTIC SCALE · 艺术化宇宙比例</span><span id="fps">WEBGL / LIVE</span><span>AD ASTRA, PER ASPERA.</span></div>
+  <aside id="quest-card" class="quest-card" aria-label="六步太阳系任务线">
+    <button id="quest-toggle" aria-expanded="true" aria-controls="quest-body"><span>远征任务线 <b id="quest-count">0 / 6</b></span><span class="quest-chevron">⌃</span></button>
+    <div class="quest-progress"><i id="quest-bar"></i></div>
+    <div id="quest-body"><h2 id="quest-title"></h2><p id="quest-description"></p><ul id="quest-checks"></ul><button id="quest-next" class="primary-button"></button><button id="quest-log" class="text-button">查看完整六步航线 ↗</button></div>
+  </aside>
+  <section id="interior-ui" class="experience-ui" hidden aria-label="空间站第一人称漫游">
+    <div class="experience-title"><span class="eyebrow">ODYSSEY / HABITABLE DECK</span><h1>群星之间，<br>有人生活。</h1><p id="interior-room">00 / 中央连接走廊</p></div>
+    <div class="interior-map"><div>DECK 01 <small>舱内导览</small></div><svg viewBox="0 0 100 115" aria-label="空间站舱内平面图"><path d="M24 12H76V48H60V72H79V90H60V106H40V90H21V72H40V48H24Z"/><path d="M40 48H60M40 72V90M60 72V90"/><text x="50" y="30">指挥区</text><text x="27" y="83">生活</text><text x="73" y="83">研究</text><circle id="map-player" cx="50" cy="87" r="2.5"/></svg><div class="waypoint-buttons"><button data-waypoint="bridge">前往指挥台</button><button data-waypoint="lab">前往研究室</button><button data-waypoint="crew">前往生活舱</button><button data-waypoint="exit">前往气闸</button></div><small id="interior-coords"></small></div>
+    <div class="walk-crosshair">+</div>
+    <div class="interior-bottom"><button id="interior-interact" class="primary-button" disabled>靠近终端后交互</button><div class="walk-manual"><span>W A S D 行走</span><span>拖动 / 方向键环顾</span><span>Shift 快走</span><span>E 交互</span></div><div class="experience-actions"><button id="interior-look">锁定鼠标环顾</button><button data-experience-exit>返回太空 ↗</button></div></div>
+  </section>
+  <section id="archive-ui" class="experience-ui" hidden aria-label="行星特写档案展厅">
+    <div class="archive-heading"><span class="eyebrow">THE PLANETARY ARCHIVE</span><span class="archive-number" id="archive-order">03</span><h1 id="archive-name">地球</h1><p id="archive-en">EARTH</p><span id="archive-type">类地行星</span></div>
+    <article class="archive-panel"><div class="section-label">OBSERVATION DOSSIER <span id="archive-status"></span></div><div id="archive-facts"></div><div class="archive-tabs" role="tablist" aria-label="行星资料分类"><button role="tab" data-archive-tab="overview">概览</button><button role="tab" data-archive-tab="detail">观测细节</button><button role="tab" data-archive-tab="log">探索记录</button></div><div id="archive-copy" role="tabpanel"></div><button id="archive-record" class="primary-button">记录这份行星档案 +</button><button id="archive-travel" class="secondary-button">驾驶飞船前往 ↗</button><a id="archive-source" class="archive-source" target="_blank" rel="noopener noreferrer">资料来源 · NASA Science ↗</a><p class="archive-note">数值取近似值；展厅模型不按相互比例展示。纹理可能为增强色或多张影像拼合。</p></article>
+    <div class="archive-tools"><button id="archive-zoom-in" aria-label="放大行星">＋</button><button id="archive-zoom-out" aria-label="缩小行星">−</button><button id="archive-rotate" aria-pressed="true">暂停自转</button><button id="archive-reset">复位视角</button><button data-experience-exit>返回太空 ↗</button><span>拖动旋转 · 滚轮缩放</span></div>
+    <div id="archive-planets" aria-label="选择行星档案"></div>
+  </section>
+  <dialog id="quest-dialog"><button id="quest-close" class="dialog-close icon-button" aria-label="关闭任务航线">×</button><div class="eyebrow">THE ODYSSEY EXPEDITION</div><h2>一条航线，六次发现。</h2><p>依次完成探索目标，回到指挥台交付数据。任务、扫描与档案记录自动保存在当前浏览器。</p><ol id="quest-route"></ol><button id="quest-restart" class="text-button">重新开始六步任务</button><div id="quest-reset-confirm" hidden><p>重新开始任务线？已有行星扫描和档案记录会保留。</p><button id="quest-reset-yes" class="secondary-button">确认重新开始</button><button id="quest-reset-no" class="text-button">取消</button></div></dialog>
+  <dialog id="crew-dialog"><button id="crew-close" class="dialog-close icon-button" aria-label="关闭船员日志">×</button><div class="eyebrow">CREW LOG / 远征第 01 日</div><h2>窗外，就是我们的家。</h2><p>值班结束后，大家总会经过观景窗。地球的弧线提醒我们：每一次向外的远征，最终都为了更好地理解来处。</p><p>前往研究室终端，可查看八大行星特写；前方指挥区负责导航校准与远征资料交付。</p></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="warp"><div></div><strong>跃迁中</strong><span id="warp-name">EARTH</span></div>
+  <dialog id="help-dialog"><button class="dialog-close icon-button" aria-label="关闭" data-icon="close"></button><div class="eyebrow">FLIGHT MANUAL / 操作指南</div><h2>下一站，由你决定。</h2><p>选择底部星球即可跃迁。点击自由飞行，驾驶探索者号穿行宇宙。</p><div class="help-grid"><div><kbd>W</kbd><kbd>S</kbd><span>前进 / 后退</span></div><div><kbd>A</kbd><kbd>D</kbd><span>向左 / 向右转向</span></div><div><kbd>↑</kbd><kbd>↓</kbd><span>俯仰飞船</span></div><div><kbd>空格</kbd><kbd>C</kbd><span>上升 / 下降</span></div><div><kbd>Shift</kbd><span>曲速推进</span></div><div><kbd>E</kbd><span>扫描附近行星</span></div><div><kbd>拖动</kbd><span>观察模式旋转 / 飞行模式转向</span></div><div><kbd>滚轮</kbd><span>调整观察距离</span></div></div><p class="help-note">六步任务与八大行星扫描均自动保存。舱内：WASD 行走、拖动环顾、E 操作终端，可点击小地图下方按钮引导前往。档案：拖动旋转、滚轮缩放、记录档案。H 切换电影模式。空间站支持模块独立拆解。</p><button class="primary-button" id="help-done">准备就绪，出发 ↗</button></dialog>
+  <div id="touch-controls"><button data-key="KeyW" aria-label="前进">↑</button><div><button data-key="KeyA" aria-label="左转">←</button><button data-key="KeyS" aria-label="后退">↓</button><button data-key="KeyD" aria-label="右转">→</button></div><button class="touch-boost" data-key="ShiftLeft">BOOST</button></div>
+  <script type="module" src="./app.js"></script>
+</body></html>

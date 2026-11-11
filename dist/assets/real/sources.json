@@ -1,0 +1,162 @@
+[
+  {
+    "source_file": "mercury.jpg",
+    "destination_file": "mercury.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 872555,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_mercury.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "venus.jpg",
+    "destination_file": "venus.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 229696,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_venus_atmosphere.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "mars.jpg",
+    "destination_file": "mars.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 750547,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_mars.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "jupiter-2k.jpg",
+    "destination_file": "jupiter.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 498976,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_jupiter.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "saturn.jpg",
+    "destination_file": "saturn.jpg",
+    "width": 4096,
+    "height": 2048,
+    "bytes": 1098204,
+    "source_url": "https://www.solarsystemscope.com/textures/download/8k_saturn.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "saturn-ring.png",
+    "destination_file": "saturn-ring.png",
+    "width": 8192,
+    "height": 500,
+    "bytes": 64790,
+    "source_url": "https://www.solarsystemscope.com/textures/download/8k_saturn_ring_alpha.png",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "uranus.jpg",
+    "destination_file": "uranus.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 77751,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_uranus.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "neptune.jpg",
+    "destination_file": "neptune.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 241580,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_neptune.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "earth-day.jpg",
+    "destination_file": "earth-day.jpg",
+    "width": 8192,
+    "height": 4096,
+    "bytes": 4565076,
+    "source_url": "https://www.solarsystemscope.com/textures/download/8k_earth_daymap.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "earth-night-2k.jpg",
+    "destination_file": "earth-night.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 255287,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_earth_nightmap.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "earth-clouds-2k.jpg",
+    "destination_file": "earth-clouds.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 965676,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_earth_clouds.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "sun-2k.jpg",
+    "destination_file": "sun.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 822427,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_sun.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "moon-2k.jpg",
+    "destination_file": "moon.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 1053869,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_moon.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "milkyway-2k.jpg",
+    "destination_file": "milkyway.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 251454,
+    "source_url": "https://www.solarsystemscope.com/textures/download/2k_stars_milky_way.jpg",
+    "license": "CC BY 4.0",
+    "creator": "Solar System Scope / INOVE"
+  },
+  {
+    "source_file": "earth-normal.jpg",
+    "destination_file": "earth-normal.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 336774,
+    "source_url": "https://raw.githubusercontent.com/mrdoob/three.js/r160/examples/textures/planets/earth_normal_2048.jpg",
+    "license": "Three.js MIT; retain source notices",
+    "creator": "Three.js contributors"
+  },
+  {
+    "source_file": "earth-specular.jpg",
+    "destination_file": "earth-specular.jpg",
+    "width": 2048,
+    "height": 1024,
+    "bytes": 223421,
+    "source_url": "https://raw.githubusercontent.com/mrdoob/three.js/r160/examples/textures/planets/earth_specular_2048.jpg",
+    "license": "Three.js MIT; retain source notices",
+    "creator": "Three.js contributors"
+  }
+]
