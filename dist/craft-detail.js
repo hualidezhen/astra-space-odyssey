@@ -443,12 +443,7 @@ function serviceArm(f) {
   }
 }
 
-export function detailStation(station, modules) {
-  const updateExposure=joints(modules);
-  const port = new T.Group();
-  port.name='Forward transfer lock';
-  port.position.set(0,2,68);
-  modules.get('dock').group.add(port);
+function buildProceduralCollar(port) {
   const f = new Fittings(port);
   const axisShell=lathe([[2.23,-16],[2.23,-4.5],[2.49,-3.6],[2.56,-.47],[2.43,-.12],[2.11,-.12],[2.06,-.6],[2.06,-4.15]]);
   f.add(axisShell,graphite,[0,0,0],undefined,alongZ);
@@ -485,8 +480,19 @@ export function detailStation(station, modules) {
   }
   f.flush();
 
+}
+
+export function detailStation(station, modules, authored=false) {
+  const updateExposure=authored ? null : joints(modules);
+  const port = new T.Group();
+  port.name='Forward transfer lock';
+  port.position.set(0,2,68);
+  modules.get('dock').group.add(port);
   const platform = new Fittings(modules.get('dock').group);
-  serviceArm(platform);
+  if (!authored) {
+    buildProceduralCollar(port);
+    serviceArm(platform);
+  }
   const guideLights=[];
   for(let k=0;k<3;k++) guideLights.push(signal(0x80d4d2,1.5));
   for(const side of [-1,1]) {
@@ -513,7 +519,7 @@ export function detailStation(station, modules) {
     lock.flush(); jaws.push({jaw,c:Math.cos(a),s:Math.sin(a)});
   }
   return { update(capture=0,seconds=0) {
-    updateExposure();
+    updateExposure?.();
     const progress=T.MathUtils.smoothstep(capture,0,1), r=.75-.27*progress;
     for(const {jaw,c,s} of jaws) jaw.position.set(c*r,s*r,-.23+.23*progress);
     for(let i=0;i<3;i++) {

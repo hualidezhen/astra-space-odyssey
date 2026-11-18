@@ -1,4 +1,5 @@
 import * as T from './vendor/three.module.js';
+import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
 import {buildStation,buildShip,setupLighting,upgradePlanets,createPostFX} from './visuals.js';
 import {detailCraft,detailStation} from './craft-detail.js';
 import {installPlanetOptics} from './planet-optics.js';
@@ -87,9 +88,27 @@ const moduleData=[
 ];
 const modules = new Map();
 for(const [id,name,code,description,offset] of moduleData){const group=new T.Group();group.userData.moduleId=id;station.add(group);modules.set(id,{group,name,code,description,offset:new T.Vector3(...offset),base:new T.Vector3(),detached:false});}
-buildStation(station,modules);
-const portDetail=detailStation(station,modules);
-const rotatingRing=new T.Group();station.add(rotatingRing);
+let portDetail;
+async function loadStation() {
+  try {
+    const {scene:model} = await new GLTFLoader().loadAsync('./assets/odyssey-station.glb');
+    const pieces = Array.from(modules.keys(), id => model.getObjectByName(id));
+    if (pieces.some(piece => !piece)) throw new Error('Incomplete Odyssey station asset');
+    for (const piece of pieces) {
+      piece.traverse(object => {
+        if (object.isMesh) object.castShadow = object.receiveShadow = true;
+      });
+      modules.get(piece.name).group.add(piece);
+    }
+    station.userData.model = 'Blender';
+  } catch (error) {
+    console.warn('Using the procedural station after a model loading error.', error);
+    buildStation(station,modules);
+    station.userData.model = 'procedural';
+  }
+  portDetail = detailStation(station,modules,station.userData.model === 'Blender');
+}
+const stationReady = loadStation();
 
 const planetsData=[
   {id:'mercury',name:'水星',en:'MERCURY',r:24,p:[-920,90,-1500],colors:['#bdb7a9','#6e665b'],type:'rock',info:'太阳最近的岩石世界。古老陨石坑记录着太阳系的漫长历史。'},
@@ -186,12 +205,12 @@ ship.rotation.order='YXZ';ship.rotation.y=shipYaw;ship.rotation.x=shipPitch;ship
 let last=performance.now(),frames=0,fpsStart=last;
 function animate(t){requestAnimationFrame(animate);if(document.hidden){last=t;return;}const dt=Math.min((t-last)/1000,.045);last=t;
 explodeCurrent=T.MathUtils.damp(explodeCurrent,explodeTarget,3.4,dt);for(const [id,m] of modules){const factor=explodeCurrent+(m.detached?.8:0);const desired=m.offset.clone().multiplyScalar(factor);m.group.position.lerp(desired,1-Math.exp(-dt*5));}
-if(!reducedMotion){rotatingRing.rotation.z+=dt*.025;planets.forEach(p=>p.globe.rotation.y+=dt*.012);}
+if(!reducedMotion)planets.forEach(p=>p.globe.rotation.y+=dt*.012);
 if(transition){const tr=transition,p=T.MathUtils.clamp((t-tr.start)/tr.duration,0,1),e=p*p*(3-2*p);const target=tr.targetFrom.clone().lerp(tr.targetTo,e);if(tr.kind==='flight'){ship.position.copy(tr.from).lerp(tr.to,e);shipYaw=0;shipPitch=0;ship.rotation.set(0,0,0);camera.position.copy(ship.position).add(new T.Vector3(0,8,32));camera.lookAt(target);orbitTarget.copy(target);}else{camera.position.copy(tr.from).lerp(tr.to,e);camera.lookAt(target);orbitTarget.copy(target);}if(p>=1){experience.event('arrive',destination);if(tr.kind==='orbit'){const offset=camera.position.clone().sub(orbitTarget);orbitRadius=offset.length();orbitPhi=Math.acos(offset.y/orbitRadius);orbitTheta=Math.atan2(offset.x,offset.z);}transition=null;toast(`已抵达${destination==='station'?'奥德赛空间站':planets.get(destination).name} · ${mode==='flight'?'继续自由飞行':'拖动观察，或启航探索'}`);}}
 else if(experience.active)experience.update(dt,t);else if(maneuvers.mode)maneuvers.update(experience.isModal()?0:dt);else if(mode==='flight'){fly(dt,t);if(destination==='jupiter'&&keys.has('KeyW')&&Math.abs(flightSpeed)>15&&!experience.isModal()&&ship.position.distanceTo(planets.get('jupiter').group.position)<planets.get('jupiter').r*8)experience.event('flight','jupiter',dt);}else updateOrbitCamera();
 updateOptics(reducedMotion?0:dt);
 craftDetail.update(mode==='flight'&&!maneuvers.mode?Math.min(1,Math.abs(flightSpeed)/180):0,Number(keys.has('KeyA'))-Number(keys.has('KeyD')),Number(keys.has('ArrowUp'))-Number(keys.has('ArrowDown')),t*.001);
-portDetail.update(maneuvers.lock,t*.001);
+portDetail?.update(maneuvers.lock,t*.001);
 sky.position.copy(camera.position);
 if(scanObject){const p=(t-scanStart)/1800;if(p>=1){scanObject=null;scanRing.material.opacity=0;}else{scanRing.scale.setScalar(scanObject.r*(1+p*1.4));scanRing.material.opacity=(1-p)*.7;scanRing.lookAt(camera.position);}}
 if(mode==='station'&&destination==='station'){const v=new T.Vector3(38,4,2).applyMatrix4(station.matrixWorld).project(camera);$('#target-marker').style.left=(v.x*.5+.5)*innerWidth+'px';$('#target-marker').style.top=((-.5*v.y+.5)*innerHeight-100)+'px';}
@@ -199,7 +218,10 @@ postFX.render(experience.active?experience.scene:scene,camera);if(!experience.ac
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));postFX.resize();});
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();toast('图形上下文中断，请刷新页面重新连接');});
 syncMode();requestAnimationFrame(animate);
-setTimeout(()=>{$('#loading').classList.add('finished');setTimeout(()=>$('#loading').remove(),900);},1200);
+Promise.all([stationReady,new Promise(resolve=>setTimeout(resolve,1200))]).then(()=>{
+  $('#loading').classList.add('finished');
+  setTimeout(()=>$('#loading').remove(),900);
+});
 
 // Read-only diagnostics for rendering and interaction verification.
 window.astra={getState:()=>({experience:experience.state(),maneuver:maneuvers.mode,docked:maneuvers.docked,mode,destination,scanned:[...scanned],explode:explodeTarget,selectedModule,shipPosition:ship.position.toArray(),cameraPosition:camera.position.toArray(),transitioning:!!transition,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,texturesLoaded,webgl:renderer.capabilities.isWebGL2}),get renderer(){return renderer;}};
