@@ -258,7 +258,39 @@ function buildThruster(f, point, direction) {
 
 export function detailCraft(ship) {
   const f = new Fittings(ship);
-  const oldFlames = ship.children.filter(m => m.geometry?.type === 'ConeGeometry' && m.material?.isShaderMaterial);
+  canopyAndSeat(ship, f);
+  f.add(unitDisk, graphite, [0,0,4.305], [.92,.075,.50], alongZ);
+  f.add(unitDisk, graphite, [0,0,-7.005], [.077,.023,.061], alongZ);
+  // Conductive contact rings and the rounded coupling probe meet the lock throat
+  // when the vehicle origin is six metres ahead of the station's collar.
+  f.add(lathe([[.04,-7.15],[.10,-7.09],[.12,-6.83],[.18,-6.60],[.17,-6.54]]),nickel,[0,0,0],undefined,alongZ);
+  for (const z of [-6.94,-6.83]) f.ring(brass,[0,0,z],.12,.021);
+  for (const side of [-1, 1]) {
+    nozzle(f, side * 2.2);
+    hatch(f, side);
+    // Dorsal equipment shoulders and recessed radiator louvers.
+    f.box(graphite,[side*.91,.69,1.58],[.59,.10,2.2],[0,0,side*-.27]);
+    for(let i=0;i<11;i++) f.box(edge,[side*.91,.765,.66+i*.18],[.48,.048,.078],[.35,0,side*-.27]);
+    for (const offset of [0,.15]) {
+      f.tube(offset ? edge : brass,[[side*(1.15+offset),.2,.48],[side*(1.51+offset),.26,.83],[side*(1.54+offset),.32,2.05],[side*(1.71+offset),.29,2.63]], .04);
+    }
+    // Metallic leading edge, thermal breaks and separate wingtip attitude pods.
+    f.rod(edge,[side*1.28,.005,-2.02],[side*5.75,.005,2.40],.088);
+    f.rod(nickel,[side*3.24,-.035,3.48],[side*5.91,-.035,3.53],.105);
+    f.box(graphite,[side*5.62,.0,2.92],[.46,.36,1.06]);
+    for (const row of [-1,1]) buildThruster(f,[side*5.63,row*.20,2.99],[0,row,0]);
+    buildThruster(f,[side*5.9,0,2.94],[side,0,0]);
+    for (const z of [4.05,4.26]) {
+      f.box(carbon,[side*.53,.13,z],[.5,.53,.16]);
+      for (const dy of [-.14,.14]) f.disk(nickel,[side*.53,dy+.13,z+.1],.058,.06,alongZ,unitBolt);
+    }
+  }
+  f.flush();
+}
+
+// The same local nozzle coordinates are used by both hulls; only the powered
+// flight instance owns animated exhaust. The airlock clone shares static meshes.
+export function craftPropulsion(ship, nozzleZ) {
   // A circumferential plume avoids the facing-dependent seam of a billboard.
   const exhaust = new T.ShaderMaterial({
     transparent:true, depthWrite:false, side:T.FrontSide, blending:T.AdditiveBlending,
@@ -278,65 +310,49 @@ export function detailCraft(ship) {
         #include <colorspace_fragment>
       }`
   });
-  if (oldFlames.length) {
-    const original=oldFlames[0].material;
-    for (const flame of oldFlames) flame.material=exhaust;
-    original.dispose();
-  }
-  canopyAndSeat(ship, f);
-  f.add(unitDisk, graphite, [0,0,4.305], [.92,.075,.50], alongZ);
-  f.add(unitDisk, graphite, [0,0,-7.005], [.077,.023,.061], alongZ);
-  // Conductive contact rings and the rounded coupling probe meet the lock throat
-  // when the vehicle origin is six metres ahead of the station's collar.
-  f.add(lathe([[.04,-7.15],[.10,-7.09],[.12,-6.83],[.18,-6.60],[.17,-6.54]]),nickel,[0,0,0],undefined,alongZ);
-  for (const z of [-6.94,-6.83]) f.ring(brass,[0,0,z],.12,.021);
-  const jetMaterial = new T.MeshBasicMaterial({ color:0x9bd9ff, transparent:true, opacity:.5, depthWrite:false, blending:T.AdditiveBlending, toneMapped:false });
-  const jetGeometry = new T.ConeGeometry(.115,.83,14,1,true);
-  const jets = [];
-  for (const side of [-1, 1]) {
-    nozzle(f, side * 2.2);
-    hatch(f, side);
-    // Dorsal equipment shoulders and recessed radiator louvers.
-    f.box(graphite,[side*.91,.69,1.58],[.59,.10,2.2],[0,0,side*-.27]);
-    for(let i=0;i<11;i++) f.box(edge,[side*.91,.765,.66+i*.18],[.48,.048,.078],[.35,0,side*-.27]);
-    for (const offset of [0,.15]) {
-      f.tube(offset ? edge : brass,[[side*(1.15+offset),.2,.48],[side*(1.51+offset),.26,.83],[side*(1.54+offset),.32,2.05],[side*(1.71+offset),.29,2.63]], .04);
-    }
-    // Metallic leading edge, thermal breaks and separate wingtip attitude pods.
-    f.rod(edge,[side*1.28,.005,-2.02],[side*5.75,.005,2.40],.088);
-    f.rod(nickel,[side*3.24,-.035,3.48],[side*5.91,-.035,3.53],.105);
-    f.box(graphite,[side*5.62,.0,2.92],[.46,.36,1.06]);
-    for (const row of [-1,1]) {
-      const origin=[side*5.63,row*.20,2.99], dir=[0,row,0];
-      buildThruster(f, origin, dir);
-      const plume=new T.Mesh(jetGeometry,jetMaterial);
-      plume.quaternion.setFromUnitVectors(up,new T.Vector3(...dir));
-      plume.visible=false;ship.add(plume);jets.push({plume,origin,dir:new T.Vector3(...dir),yaw:0,pitch:row});
-    }
-    const origin=[side*5.9,0,2.94],dir=[side,0,0];
-    buildThruster(f,origin,dir);
+  const plumeGeometry = new T.ConeGeometry(.36, 1, 32, 8, true);
+  plumeGeometry.rotateX(Math.PI / 2);
+  plumeGeometry.translate(0,0,.5);
+  const plumes=[];
+  const jets=[];
+  const jetMaterial=new T.MeshBasicMaterial({color:0x9bd9ff,transparent:true,opacity:.52,depthWrite:false,blending:T.AdditiveBlending,toneMapped:false});
+  const jetGeometry=new T.ConeGeometry(.115,.83,14,1,true);
+  function jet(origin, direction, yaw, pitch) {
     const plume=new T.Mesh(jetGeometry,jetMaterial);
-    plume.quaternion.setFromUnitVectors(up,new T.Vector3(...dir));
-    plume.visible=false;ship.add(plume);jets.push({plume,origin,dir:new T.Vector3(...dir),yaw:side,pitch:0});
-    for (const z of [4.05,4.26]) {
-      f.box(carbon,[side*.53,.13,z],[.5,.53,.16]);
-      for (const dy of [-.14,.14]) f.disk(nickel,[side*.53,dy+.13,z+.1],.058,.06,alongZ,unitBolt);
-    }
+    const dir=new T.Vector3(...direction);
+    plume.quaternion.setFromUnitVectors(up,dir);
+    plume.visible=false;
+    ship.add(plume);
+    jets.push({plume,origin,dir,yaw,pitch});
   }
-  f.flush();
-  return { update(throttle=0,yaw=0,pitch=0,seconds=0) {
-    const jitter=.92+.08*Math.sin(seconds*26);
+  for (const side of [-1,1]) {
+    const plume=new T.Mesh(plumeGeometry,exhaust);
+    plume.position.set(side*2.2,-.15,nozzleZ);
+    ship.add(plume);
+    plumes.push(plume);
+    for(const row of [-1,1]) jet([side*5.63,row*.20,2.99],[0,row,0],0,row);
+    jet([side*5.9,0,2.94],[side,0,0],side,0);
+  }
+  const liners=new Set();
+  ship.traverse(obj=>{
+    if(obj.isMesh && obj.material.name==='engine') liners.add(obj.material);
+  });
+  let burn=0;
+  return {update(throttle,yaw,pitch,seconds,dt) {
+    burn=T.MathUtils.damp(burn,throttle,6,dt);
+    for(const liner of liners) liner.emissiveIntensity=.10+3.9*burn;
     exhaust.uniforms.time.value=seconds;
-    exhaust.uniforms.thrust.value=throttle;
-    for (const flame of oldFlames) {
-      flame.scale.y=Math.min(flame.scale.y,.44+1.9*throttle);
-      flame.position.z=5.50+2.4*flame.scale.y;
+    exhaust.uniforms.thrust.value=burn;
+    const jitter=.96+.04*Math.sin(seconds*24);
+    for(const plume of plumes) {
+      plume.visible=burn>.005;
+      plume.scale.set(.72+.28*burn,.72+.28*burn,(.42+5.8*burn)*jitter);
     }
     for (const jet of jets) {
       const power=T.MathUtils.clamp(jet.yaw*yaw+jet.pitch*pitch,0,1);
       jet.plume.visible=power>.04;
       if (!jet.plume.visible) continue;
-      const len=(.1+power*(1.05+.22*throttle))*jitter;
+      const len=(.1+power*(1.05+.22*burn))*jitter;
       jet.plume.scale.set(.65+.35*power,len,.65+.35*power);
       const extension=.08+.415*len;
       jet.plume.position.set(...jet.origin).addScaledVector(jet.dir,extension);

@@ -52,7 +52,7 @@ function panelBackground(ctx, heading) {
   ctx.strokeRect(9,62,w-18,h-73);
 }
 
-export function dressDeck(world, ship) {
+export function dressDeck(world, explorerReady) {
   const art=new T.Group();
   art.name='Pressure deck fittings'; world.add(art);
   const paint=brushedSurface();
@@ -167,16 +167,20 @@ export function dressDeck(world, ship) {
     for(let i=0;i<6;i++) box(brass,s*(.3+i*.32),.45,12.78,.145,.47,.10,0,0,-.40);
   }
   const berth=screen(0,3.84,12.74,2.62,.53,0,Math.PI,[768,166]);
-  const parked=ship?.clone(true);
-  if(parked) {
-    parked.name='Explorer at berth'; parked.position.set(.25,1.97,21);
-    parked.rotation.set(.12,-.95,-.07); parked.scale.setScalar(.72);
-    parked.traverse(o=>{
-      if(o.isLight || (o.isMesh && o.material?.blending===T.AdditiveBlending)) o.visible=false;
-      if(o.isMesh) {o.castShadow=false; o.receiveShadow=false;}
+  const parked=new T.Group();
+  parked.name='Explorer at berth';
+  parked.position.set(.25,1.97,21);
+  parked.rotation.set(.12,-.95,-.07);
+  parked.scale.setScalar(.72);
+  parked.visible=false;
+  art.add(parked);
+  explorerReady?.then(hull=>{
+    const display=hull.clone(true);
+    display.traverse(o=>{
+      if(o.isMesh) o.castShadow=o.receiveShadow=false;
     });
-    art.add(parked);
-  }
+    parked.add(display);
+  });
   for(const s of [-1,1]) {
     for(let j=0;j<5;j++) {
       const z=16+j*2.45;
@@ -267,7 +271,7 @@ export function dressDeck(world, ship) {
     step=Math.max(0,Math.min(6,Math.floor(step)||0));
     const changed=step!==lastStep || docked!==lastDocked || destination!==lastDestination;
     if(changed) {
-      if(parked) parked.visible=Boolean(docked);
+      parked.visible=Boolean(docked);
       const target=bodies[destination] || String(destination || '—');
       const c=nav.ctx;
       panelBackground(c,'ODYSSEY   /   EXPEDITION CONTROL');

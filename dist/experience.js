@@ -15,7 +15,7 @@ const facts={
  neptune:{type:'冰巨行星',au:'30.1',year:'约 165 年',feature:'遥远的风暴世界',text:'八大行星中距离太阳最远的一颗。冰巨行星的大气仍非常活跃，有强风和不断演变的云系。',focus:'展示纹理经过颜色增强，便于辨认云层；色彩和展厅比例不等同于肉眼观测。',source:'https://science.nasa.gov/neptune/neptune-facts/'}
 };
 
-export function createExperience({camera,renderer,planets,ship,keys,toast,environment,getContext,navigate,startDock,startPhoto,restoreUI}){
+export function createExperience({camera,renderer,planets,explorerReady,keys,toast,environment,getContext,navigate,startDock,startPhoto,restoreUI}){
  const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
  const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))||fallback;}catch{return fallback;}};
  let storageWarned=false;
@@ -136,7 +136,7 @@ export function createExperience({camera,renderer,planets,ship,keys,toast,enviro
    for(const [x,z]of[[0,6],[0,-4],[0,-17],[6,1.5],[-6,1.5]]){const l=new T.PointLight(x<0?0xffd7a3:0xb6e8f4,x===0?15:12,13,2);l.position.set(x,3.8,z);world.add(l);}
    const obstacles=[[-1.95,1.95,-21,-19.55],[-7.1,-3.3,-18.5,-17],[3.3,7.1,-18.5,-17],[-5.85,-4.55,-16.5,-14.85],[4.55,5.85,-16.5,-14.85],[6.85,8.5,.05,2.95],[3.2,8.7,-2.7,-1.65],[-8.95,-6.65,-2.05,.05],[-8.95,-6.65,2.75,4.85]];
    const terminals=[{id:'bridge',name:'导航指挥台',p:new T.Vector3(0,1.7,-20.3),stand:new T.Vector3(0,1.7,-18.2),yaw:0},{id:'lab',name:'行星档案终端',p:new T.Vector3(7.7,1.7,1.5),stand:new T.Vector3(5.8,1.7,1.5),yaw:-Math.PI/2},{id:'crew',name:'船员远征日志',p:new T.Vector3(-8,1.7,1.5),stand:new T.Vector3(-5.8,1.7,1.5),yaw:Math.PI/2},{id:'exit',name:'气闸 · 返回太空',p:new T.Vector3(0,1.7,12),stand:new T.Vector3(0,1.7,9.6),yaw:Math.PI}];
-   return {world,holo,earth,obstacles,terminals,updateDeck:dressDeck(world,ship)};
+   return {world,holo,earth,obstacles,terminals,updateDeck:dressDeck(world,explorerReady)};
  }
  function canWalk(x,z){
    const margin=.3;

@@ -94,5 +94,6 @@ export function createManeuvers({ship,camera,port,saturn,keys,toast,onDock,onBoa
     saved.getContext('2d').drawImage(canvas,0,0,saved.width,saved.height);onPhoto(saved.toDataURL('image/jpeg',.86));
   }
   return {approach,survey,cancel,interact,moveView,afterRender,get mode(){return mode;},get docked(){return docked;},get lock(){return lock;},
+    get dockingVelocity(){return velocity;},
     update(dt){if(mode==='dock')updateDock(dt);else if(mode==='photo')updatePhoto(dt);}};
 }

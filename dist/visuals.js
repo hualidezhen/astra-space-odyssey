@@ -107,8 +107,6 @@ export function buildShip(ship){
  const canopy=mesh(ship,new T.SphereGeometry(1,40,24,0,Math.PI*2,0,Math.PI/2),blackGlass,[0,.65,-2]);canopy.scale.set(.8,.9,2.05);
  for(let z of [-3.4,-2,-.6]){const arc=[];for(let i=0;i<=24;i++){const a=i/24*Math.PI;arc.push(new T.Vector3(Math.cos(a)*.82,.65+Math.sin(a)*.9,z));}mesh(ship,new T.TubeGeometry(new T.CatmullRomCurve3(arc),24,.035,5,false),titanium);}
  rod(ship,titanium,[0,1.55,-3.3],[0,1.55,-.65],.035);
- const flameMat=new T.ShaderMaterial({transparent:true,depthWrite:false,blending:T.AdditiveBlending,side:T.DoubleSide,vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:'varying vec2 vUv;void main(){float v=pow(clamp(1.0-vUv.y,0.,1.),1.8);float s=sin(clamp(vUv.x,0.,1.)*3.14159265);s*=s;vec3 color=mix(vec3(.08,.25,1.0),vec3(.48,.88,1.0),v);gl_FragColor=vec4(color*2.0,v*s*.28);}',toneMapped:false});
- const flames=[];
  for(let side of [-1,1]){
   const wing=polygonHull(ship,armor,[[side*1,-2.4],[side*5.9,2.5],[side*6.1,3.5],[side*2,3.4],[side*.9,1.5]],.2,[0,-.05,0]);
   polygonHull(ship,charcoal,[[side*1.7,-.8],[side*5.3,2.6],[side*4.6,2.9],[side*2.2,1.6]],.035,[0,.02,0]);
@@ -119,7 +117,6 @@ export function buildShip(ship){
   tor(nacelle,silver,.64,.1,[0,0,2.7],[0,0,0],48);tor(nacelle,cyan,.47,.035,[0,0,2.77],[0,0,0],48);
   cyl(nacelle,charcoal,.45,.45,.03,[0,0,2.78],[Math.PI/2,0,0]);cyl(nacelle,cyan,.3,.3,.04,[0,0,2.8],[Math.PI/2,0,0]);
   const petals=[];for(let j=0;j<16;j++){const a=j/16*Math.PI*2;petals.push({p:[Math.cos(a)*.59,Math.sin(a)*.59,2.5],s:[.12,.12,.72],r:[0,0,a]});}batch(nacelle,titanium,petals);
-  const flame=mesh(ship,new T.ConeGeometry(.36,4.8,24,1,true),flameMat,[side*2.2,-.15,7.2],[Math.PI/2,0,0]);flame.castShadow=false;flames.push(flame);
   const tail=polygonHull(ship,armor,[[-1,0],[2,0],[1.4,1.7],[.7,1.9]],.13,[side*3,.1,2]);tail.rotation.set(0,Math.PI/2,side*-.13);
   for(let i=0;i<7;i++)box(ship,charcoal,[side*1.4,.5,.3+i*.32],[.55,.045,.12],[0,0,side*.15]);
   label(ship,side<0?'EX-07':'ASTRA',[side*3.5,.15,1.75],[2.5,.6]);
@@ -129,8 +126,7 @@ export function buildShip(ship){
  for(let side of [-1,1]){box(ship,ceramic,[side*.6,.68,2.1],[.24,.1,2.4]);box(ship,titanium,[side*.63,.78,2.1],[.08,.05,2]);}
  const antenna=rod(ship,titanium,[0,.9,2.5],[0,2.1,3],.035);
  label(ship,'EXPLORER 07',[0,.85,1.7],[1,2.5]);
- const glow=new T.PointLight(0x65acff,6,16,2);glow.position.set(0,0,5);ship.add(glow);
- flushRods();return flames;
+ flushRods();
 }
 
 export function setupLighting(scene,renderer,sunlight,rim,fill){

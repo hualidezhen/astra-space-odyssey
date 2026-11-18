@@ -1,7 +1,8 @@
 import * as T from './vendor/three.module.js';
 import {GLTFLoader} from './vendor/loaders/GLTFLoader.js';
+import {applySurfaceFinish} from './surface-finish.js';
 import {buildStation,buildShip,setupLighting,upgradePlanets,createPostFX} from './visuals.js';
-import {detailCraft,detailStation} from './craft-detail.js';
+import {detailCraft,detailStation,craftPropulsion} from './craft-detail.js';
 import {installPlanetOptics} from './planet-optics.js';
 import {createManeuvers} from './maneuvers.js';
 import {createExperience} from './experience.js';
@@ -94,6 +95,7 @@ async function loadStation() {
     const {scene:model} = await new GLTFLoader().loadAsync('./assets/odyssey-station.glb');
     const pieces = Array.from(modules.keys(), id => model.getObjectByName(id));
     if (pieces.some(piece => !piece)) throw new Error('Incomplete Odyssey station asset');
+    applySurfaceFinish(model);
     for (const piece of pieces) {
       piece.traverse(object => {
         if (object.isMesh) object.castShadow = object.receiveShadow = true;
@@ -138,8 +140,29 @@ planetsData.forEach((d,i)=>{const points=[];for(let j=0;j<=192;j++){const a=j/19
 
 // Third-person craft: a compact, readable explorer with twin visible thrusters.
 const ship = new T.Group();scene.add(ship);ship.visible=false;
-const thrusters=buildShip(ship);
-const craftDetail=detailCraft(ship);
+let propulsion;
+async function loadExplorer() {
+  let hull;
+  try {
+    const asset=await new GLTFLoader().loadAsync('./assets/explorer-ex07.glb');
+    hull=asset.scene;
+    applySurfaceFinish(hull);
+    hull.traverse(object=>{
+      if (object.isMesh) object.castShadow=object.receiveShadow=true;
+    });
+    ship.userData.model='Blender';
+  } catch (error) {
+    console.warn('Using the procedural explorer after a model loading error.',error);
+    hull=new T.Group();
+    buildShip(hull);
+    detailCraft(hull);
+    ship.userData.model='procedural';
+  }
+  ship.add(hull);
+  propulsion=craftPropulsion(ship,ship.userData.model==='Blender'?5.02:5.50);
+  return hull;
+}
+const explorerReady=loadExplorer();
 setupLighting(scene,renderer,sunlight,rimLight,fill);
 upgradePlanets(planets,loader,sunGroup,sky);
 const updateOptics=installPlanetOptics(planets);
@@ -166,7 +189,7 @@ const maneuvers=createManeuvers({ship,camera,port:modules.get('dock').group,satu
 function startDock(){if(transition||destination!=='station')return;experience.close();if(mode!=='flight')switchMode('flight');flightSpeed=0;setExplode(0);modules.get('dock').detached=false;maneuvers.approach();}
 function startPhoto(){if(transition||destination!=='saturn')return;experience.close();if(mode!=='flight')switchMode('flight');flightSpeed=0;maneuvers.survey();}
 $('#start-dock').onclick=startDock;$('#start-photo').onclick=startPhoto;
-const experience=createExperience({camera,renderer,planets,ship,keys,toast,startPhoto,startDock,environment:scene.environment,getContext:()=>({mode,destination,scanned,docked:maneuvers.docked,transitioning:!!transition}),navigate:(id,flight)=>{if(flight&&mode!=='flight')switchMode('flight');travel(id);},restoreUI:()=>{syncMode();if(mode!=='flight')updateOrbitCamera();}});
+const experience=createExperience({camera,renderer,planets,explorerReady,keys,toast,startPhoto,startDock,environment:scene.environment,getContext:()=>({mode,destination,scanned,docked:maneuvers.docked,transitioning:!!transition}),navigate:(id,flight)=>{if(flight&&mode!=='flight')switchMode('flight');travel(id);},restoreUI:()=>{syncMode();if(mode!=='flight')updateOrbitCamera();}});
 function syncMode(){$('#start-dock').hidden=destination!=='station'||mode==='solar';$('#start-photo').hidden=destination!=='saturn'||mode==='solar';document.body.classList.toggle('flight',mode==='flight');document.body.classList.toggle('solar',mode==='solar');$$('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));$('#station-panel').classList.toggle('hidden',mode!=='station'||destination!=='station');$('#reticle').classList.toggle('hidden',mode!=='flight');$('#telemetry').classList.toggle('hidden',mode!=='flight');$('#scan').classList.toggle('hidden',destination==='station');ship.visible=mode==='flight';orbits.visible=mode==='solar';$('#target-marker').classList.toggle('hidden',mode!=='station'||destination!=='station');$('#launch').innerHTML=mode==='flight'?'<span>切换至轨道观察</span><span class="button-arrow">↗</span>':'<span>'+icons.rocket.replace(/^/,'<svg viewBox="0 0 24 24">')+'</svg></span><span>启航 · 自由探索</span><span class="button-arrow">↗</span>';
 $('#view-hint').innerHTML=mode==='flight'?'<span>W S 推进</span><b>·</b><span>A D 转向</span><b>·</b><span>↑ ↓ 俯仰</span><b>·</b><span>Shift 加速</span>':'<span>拖动旋转</span><b>·</b><span>滚轮缩放</span><b>·</b><span>点击模块查看</span>';
 }
@@ -201,7 +224,7 @@ function playBeep(){const o=audioCtx.createOscillator(),g=audioCtx.createGain();
 function playWarp(){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(60,audioCtx.currentTime);o.frequency.exponentialRampToValueAtTime(600,audioCtx.currentTime+1);g.gain.setValueAtTime(.001,audioCtx.currentTime);g.gain.linearRampToValueAtTime(.08,audioCtx.currentTime+.5);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+1.5);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+1.5);}
 function enforceCollision(){for(const p of planets.values()){const delta=collisionV.copy(ship.position).sub(p.group.position),min=p.r*1.075+(p.id==='saturn'?8:0);if(delta.length()<min){if(delta.lengthSq()<.001)delta.set(0,0,1);ship.position.copy(p.group.position).add(delta.setLength(min));flightSpeed*=.25;$('#flight-status').textContent='近地防撞系统';}}if(ship.position.length()<58&&Math.abs(ship.position.y)<40){collisionV.copy(ship.position).setLength(59);ship.position.copy(collisionV);flightSpeed*=.5;}}
 function fly(dt,t){const paused=experience.isModal();const boost=!paused&&(keys.has('ShiftLeft')||keys.has('ShiftRight'));const thrust=!paused?Number(keys.has('KeyW'))-Number(keys.has('KeyS')):0;const max=boost?950:180;flightSpeed=T.MathUtils.damp(flightSpeed,thrust*max,thrust?1.5:2.2,dt);if(!paused){shipYaw+=((keys.has('KeyA')||keys.has('ArrowLeft')?1:0)-(keys.has('KeyD')||keys.has('ArrowRight')?1:0))*dt*.8;shipPitch=T.MathUtils.clamp(shipPitch+((keys.has('ArrowUp')?1:0)-(keys.has('ArrowDown')?1:0))*dt*.65,-1.3,1.3);ship.position.y+=((keys.has('Space')?1:0)-(keys.has('KeyC')?1:0))*dt*(boost?300:65);}
-ship.rotation.order='YXZ';ship.rotation.y=shipYaw;ship.rotation.x=shipPitch;ship.rotation.z=T.MathUtils.damp(ship.rotation.z,(!paused&&keys.has('KeyA')?.2:!paused&&keys.has('KeyD')?-.2:0),3,dt);const forward=tempV.set(0,0,-1).applyQuaternion(ship.quaternion);ship.position.addScaledVector(forward,flightSpeed*dt);enforceCollision();const desired=tempV2.set(0,8,32).applyQuaternion(ship.quaternion).add(ship.position);camera.position.lerp(desired,1-Math.exp(-dt*4));const look=ship.position.clone().addScaledVector(forward,18);camera.lookAt(look);orbitTarget.copy(ship.position);thrusters.forEach(f=>{f.scale.y=.35+Math.abs(flightSpeed)/180+(reducedMotion?0:Math.sin(t*.045)*.08);f.material.opacity=.4+Math.min(Math.abs(flightSpeed)/180,.5);});$('#speed').textContent=Math.round(Math.abs(flightSpeed));$('#speed-bar').style.width=Math.min(Math.abs(flightSpeed)/950*100,100)+'%';$('#flight-status').textContent=boost&&thrust?'曲速推进':thrust?'巡航推进':'惯性滑行';if(audioOn)audioGain.gain.setTargetAtTime(.22+Math.abs(flightSpeed)/2500,audioCtx.currentTime,.15);}
+ship.rotation.order='YXZ';ship.rotation.y=shipYaw;ship.rotation.x=shipPitch;ship.rotation.z=T.MathUtils.damp(ship.rotation.z,(!paused&&keys.has('KeyA')?.2:!paused&&keys.has('KeyD')?-.2:0),3,dt);const forward=tempV.set(0,0,-1).applyQuaternion(ship.quaternion);ship.position.addScaledVector(forward,flightSpeed*dt);enforceCollision();const desired=tempV2.set(0,8,32).applyQuaternion(ship.quaternion).add(ship.position);camera.position.lerp(desired,1-Math.exp(-dt*4));const look=ship.position.clone().addScaledVector(forward,18);camera.lookAt(look);orbitTarget.copy(ship.position);$('#speed').textContent=Math.round(Math.abs(flightSpeed));$('#speed-bar').style.width=Math.min(Math.abs(flightSpeed)/950*100,100)+'%';$('#flight-status').textContent=boost&&thrust?'曲速推进':thrust?'巡航推进':'惯性滑行';if(audioOn)audioGain.gain.setTargetAtTime(.22+Math.abs(flightSpeed)/2500,audioCtx.currentTime,.15);}
 let last=performance.now(),frames=0,fpsStart=last;
 function animate(t){requestAnimationFrame(animate);if(document.hidden){last=t;return;}const dt=Math.min((t-last)/1000,.045);last=t;
 explodeCurrent=T.MathUtils.damp(explodeCurrent,explodeTarget,3.4,dt);for(const [id,m] of modules){const factor=explodeCurrent+(m.detached?.8:0);const desired=m.offset.clone().multiplyScalar(factor);m.group.position.lerp(desired,1-Math.exp(-dt*5));}
@@ -209,7 +232,20 @@ if(!reducedMotion)planets.forEach(p=>p.globe.rotation.y+=dt*.012);
 if(transition){const tr=transition,p=T.MathUtils.clamp((t-tr.start)/tr.duration,0,1),e=p*p*(3-2*p);const target=tr.targetFrom.clone().lerp(tr.targetTo,e);if(tr.kind==='flight'){ship.position.copy(tr.from).lerp(tr.to,e);shipYaw=0;shipPitch=0;ship.rotation.set(0,0,0);camera.position.copy(ship.position).add(new T.Vector3(0,8,32));camera.lookAt(target);orbitTarget.copy(target);}else{camera.position.copy(tr.from).lerp(tr.to,e);camera.lookAt(target);orbitTarget.copy(target);}if(p>=1){experience.event('arrive',destination);if(tr.kind==='orbit'){const offset=camera.position.clone().sub(orbitTarget);orbitRadius=offset.length();orbitPhi=Math.acos(offset.y/orbitRadius);orbitTheta=Math.atan2(offset.x,offset.z);}transition=null;toast(`已抵达${destination==='station'?'奥德赛空间站':planets.get(destination).name} · ${mode==='flight'?'继续自由飞行':'拖动观察，或启航探索'}`);}}
 else if(experience.active)experience.update(dt,t);else if(maneuvers.mode)maneuvers.update(experience.isModal()?0:dt);else if(mode==='flight'){fly(dt,t);if(destination==='jupiter'&&keys.has('KeyW')&&Math.abs(flightSpeed)>15&&!experience.isModal()&&ship.position.distanceTo(planets.get('jupiter').group.position)<planets.get('jupiter').r*8)experience.event('flight','jupiter',dt);}else updateOrbitCamera();
 updateOptics(reducedMotion?0:dt);
-craftDetail.update(mode==='flight'&&!maneuvers.mode?Math.min(1,Math.abs(flightSpeed)/180):0,Number(keys.has('KeyA'))-Number(keys.has('KeyD')),Number(keys.has('ArrowUp'))-Number(keys.has('ArrowDown')),t*.001);
+const piloting=mode==='flight'&&!experience.active&&!experience.isModal()&&!transition;
+let thrust=0,turn=0,pitchInput=0;
+if(piloting&&!maneuvers.mode) {
+  turn=Number(keys.has('KeyA')||keys.has('ArrowLeft'))-Number(keys.has('KeyD')||keys.has('ArrowRight'));
+  pitchInput=Number(keys.has('ArrowUp'))-Number(keys.has('ArrowDown'));
+  if(keys.has('KeyW')) thrust=keys.has('ShiftLeft')||keys.has('ShiftRight')?1:.62;
+} else if(piloting&&maneuvers.mode==='dock'&&!maneuvers.docked) {
+  // Pilot and autopilot use the same port-relative velocity during approach.
+  const velocity=maneuvers.dockingVelocity;
+  thrust=T.MathUtils.clamp(-velocity.z/6,0,1)*.18;
+  turn=T.MathUtils.clamp(-velocity.x/3,-1,1);
+  pitchInput=T.MathUtils.clamp(-velocity.y/3,-1,1);
+}
+propulsion?.update(thrust,turn,pitchInput,t*.001,dt);
 portDetail?.update(maneuvers.lock,t*.001);
 sky.position.copy(camera.position);
 if(scanObject){const p=(t-scanStart)/1800;if(p>=1){scanObject=null;scanRing.material.opacity=0;}else{scanRing.scale.setScalar(scanObject.r*(1+p*1.4));scanRing.material.opacity=(1-p)*.7;scanRing.lookAt(camera.position);}}
@@ -218,10 +254,10 @@ postFX.render(experience.active?experience.scene:scene,camera);if(!experience.ac
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));postFX.resize();});
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();toast('图形上下文中断，请刷新页面重新连接');});
 syncMode();requestAnimationFrame(animate);
-Promise.all([stationReady,new Promise(resolve=>setTimeout(resolve,1200))]).then(()=>{
+Promise.all([stationReady,explorerReady,new Promise(resolve=>setTimeout(resolve,1200))]).then(()=>{
   $('#loading').classList.add('finished');
   setTimeout(()=>$('#loading').remove(),900);
 });
 
 // Read-only diagnostics for rendering and interaction verification.
-window.astra={getState:()=>({experience:experience.state(),maneuver:maneuvers.mode,docked:maneuvers.docked,mode,destination,scanned:[...scanned],explode:explodeTarget,selectedModule,shipPosition:ship.position.toArray(),cameraPosition:camera.position.toArray(),transitioning:!!transition,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,texturesLoaded,webgl:renderer.capabilities.isWebGL2}),get renderer(){return renderer;}};
+window.astra={getState:()=>({experience:experience.state(),maneuver:maneuvers.mode,docked:maneuvers.docked,mode,destination,scanned:[...scanned],explode:explodeTarget,selectedModule,shipModel:ship.userData.model,shipPosition:ship.position.toArray(),cameraPosition:camera.position.toArray(),transitioning:!!transition,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,texturesLoaded,webgl:renderer.capabilities.isWebGL2}),get renderer(){return renderer;}};

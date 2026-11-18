@@ -26,7 +26,7 @@ function bundle(file){
   });
   source=source.replace(/^export (const|function|class) (\w+)/gm,(_,kind,name)=>{names.push(name);return kind+' '+name;});
   source=source.replace('const embeddedAssets={};','const embeddedAssets=__assets;');
-  source=source.replace("'./assets/odyssey-station.glb'",()=>JSON.stringify(data('assets/odyssey-station.glb','model/gltf-binary')));
+  source=source.replace(/'\.\/assets\/([^/']+\.glb)'/g,(_,name)=>JSON.stringify(data('assets/'+name,'model/gltf-binary')));
   source=source.replace(/'\.\/assets\/real\/([^']+\.(?:png|jpg))'/g,(_,name)=>'__assets['+JSON.stringify(name)+']');
   source=source.replace(/'\.\/assets\/([^/']+\.(?:png|jpg))'/g,(_,name)=>JSON.stringify(data('assets/'+name,name.endsWith('.png')?'image/png':'image/jpeg')));
   modules.set(file,'__modules['+JSON.stringify(file)+']=(()=>{\n'+source+'\nreturn {'+names.join(',')+'};\n})();');
